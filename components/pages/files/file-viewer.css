@@ -1,0 +1,15 @@
+#pdf-controls {
+  display: none !important;
+}
+#file-name {
+  display: none !important;
+}
+#header-bar {
+  display: none !important;
+}
+
+#pdf-renderer {
+  border: 1px solid #414146;
+
+  background-color: #09090b;
+}

@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String @id
+  email     String @unique
+  firstName String
+  lastName  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  folders Folder[]
+  File    File[]
+
+  @@map("users")
+}
+
+model Folder {
+  id     String @id @default(cuid())
+  userId String
+
+  parentId    String?
+  name        String
+  description String?
+
+  starred   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subFolders   Folder[] @relation("FolderSubFolders")
+  parentFolder Folder?  @relation("FolderSubFolders", fields: [parentId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  File         File[]
+
+  @@map("folders")
+}
+
+model File {
+  id        String   @id @default(cuid())
+  name      String   @default("Untitled")
+  type      String
+  size      Int
+  key       String
+  userId    String
+  folderId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deletedAt DateTime?
+  starred   Boolean   @default(false)
+
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder Folder? @relation(fields: [folderId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("files")
+}
