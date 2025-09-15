@@ -2,8 +2,10 @@
 
 import {
   defaultShouldDehydrateQuery,
+  MutationCache,
   QueryClient,
   QueryClientProvider,
+  QueryKey,
 } from "@tanstack/react-query";
 import {
   createTRPCClient,
@@ -16,9 +18,29 @@ import SuperJSON from "superjson";
 import { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { AppRouter } from "@/lib/server/trpc/routers";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { toast } from "sonner";
 
 function makeQueryClient() {
-  return new QueryClient({
+  const queryClient = new QueryClient({
+    mutationCache: new MutationCache({
+      onSuccess(data, variables, context, mutation) {
+        if (mutation.meta?.successMessage) {
+          toast.success(mutation.meta?.successMessage as string);
+        }
+      },
+      onError(data, variables, context, mutation) {
+        if (mutation.meta?.errorMessage) {
+          toast.error(mutation.meta?.errorMessage as string);
+        }
+      },
+      onSettled(_, __, ___, ____, mutation) {
+        if (mutation.meta?.invalidateQueries) {
+          queryClient.invalidateQueries({
+            queryKey: mutation.meta.invalidateQueries as QueryKey,
+          });
+        }
+      },
+    }),
     defaultOptions: {
       queries: {
         // With SSR, we usually want to set some default staleTime
@@ -36,6 +58,8 @@ function makeQueryClient() {
       },
     },
   });
+
+  return queryClient;
 }
 let browserQueryClient: QueryClient | undefined = undefined;
 

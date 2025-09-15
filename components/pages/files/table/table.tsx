@@ -81,7 +81,6 @@ export const DataTable = <TData, TValue>({
                 ))}
               </>
             ) : (
-              // ADD DROP ZONE
               <TableRow>
                 <TableCell
                   colSpan={columns.length}

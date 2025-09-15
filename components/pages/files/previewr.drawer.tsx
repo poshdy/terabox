@@ -1,9 +1,4 @@
-import {
-  Sheet,
-  SheetTitle,
-  SheetContent,
-  SheetHeader,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useFilesContext } from "@/hooks/use-files-context";
 import { useTRPC } from "@/utils/trpc/root";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -14,13 +9,7 @@ import "./file-viewer.css";
 import { filesize } from "filesize";
 import dayjs from "dayjs";
 import { Button } from "@/components/ui/button";
-import { IconCopy, IconDownload, IconEye } from "@tabler/icons-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { IconCopy, IconDownload } from "@tabler/icons-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +25,7 @@ type FilePreviewerProps = {
 
 export const FilePreviewer = ({ onClose, open }: FilePreviewerProps) => {
   const { fileId } = useFilesContext();
+
   const trpc = useTRPC();
   const { data, isPending } = useQuery(
     trpc.files.getFile.queryOptions(

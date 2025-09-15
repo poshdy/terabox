@@ -3,10 +3,6 @@ import { Funnel_Sans } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { TRPCReactProvider } from "@/utils/trpc/client";
-import { AppSidebar } from "@/components/layout/side-bar";
-
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { AppHeader } from "@/components/layout/app-header";
 
 const funnelSans = Funnel_Sans({
   subsets: ["latin"],
@@ -23,14 +19,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html suppressHydrationWarning lang="en">
+    <TRPCReactProvider>
+      <html suppressHydrationWarning lang="en">
         <ClerkProvider>
-        <TRPCReactProvider>
           <body className={`${funnelSans.className}   dark`}>
             <main>{children}</main>
           </body>
-        </TRPCReactProvider>
-    </ClerkProvider>
+        </ClerkProvider>
       </html>
+    </TRPCReactProvider>
   );
 }

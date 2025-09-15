@@ -1,5 +1,5 @@
 import { useAuth } from "@clerk/clerk-react";
-import { useUser } from "@clerk/nextjs";
+
 import * as tus from "tus-js-client";
 
 export type UploadStatus = "uploading" | "failed" | "completed" | "cancelled";
@@ -30,8 +30,7 @@ export const useUpload = ({
 }: useUploadProps) => {
   const { userId } = useAuth();
 
-  console.log({ userId });
-  const upload = ({ file, fileMetadata }: UploadProps) => {
+  const upload = ({ file }: UploadProps) => {
     const tusObj = new tus.Upload(file, {
       endpoint: process.env.NEXT_PUBLIC_UPLOAD_ENDPOINT!,
 
@@ -50,7 +49,7 @@ export const useUpload = ({
       },
       onProgress(bytesSent, bytesTotal) {
         const progress = ((bytesSent / bytesTotal) * 100).toFixed(2);
-        console.log(`file ${file.name} upload progress:`, progress);
+
         onProgress?.(file, progress);
       },
       onSuccess() {

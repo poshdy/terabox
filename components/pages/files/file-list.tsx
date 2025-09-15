@@ -41,7 +41,7 @@ const FilesList = () => {
         <MoveModal open={modal.isOpen} onClose={() => closeModal("move")} />
       )}
 
-      {modal?.type == "viewer" && (
+      {modal?.type == "viewer" && modal.isOpen && (
         <FilePreviewer
           open={modal.isOpen}
           onClose={() => closeModal("viewer")}

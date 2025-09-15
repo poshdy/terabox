@@ -19,11 +19,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useTRPC } from "@/utils/trpc/root";
-import { QueryClient, useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useFilesContext } from "@/hooks/use-files-context";
-import { toast } from "sonner";
+import { useMutateFileFolder } from "@/hooks/use-folder-mutation";
 
 type CreateUpdateModalProps = {
   open: boolean;
@@ -33,13 +31,14 @@ const folderSchema = z.object({
   title: z.string(),
   description: z.string().nullish(),
 });
-type FolderInput = z.infer<typeof folderSchema>;
+export type FolderInput = z.infer<typeof folderSchema>;
 
 export const CreateUpdateModal = ({
   open,
   onClose,
 }: CreateUpdateModalProps) => {
   const { editItem } = useFilesContext();
+
   const resourceType = !editItem
     ? "folder"
     : editItem.type == "folder"
@@ -48,69 +47,11 @@ export const CreateUpdateModal = ({
 
   const actionType = editItem ? "edit" : "create";
 
-  const trpc = useTRPC();
-  const queryClient = new QueryClient();
-  const { mutateAsync: createFolder, isPending } = useMutation(
-    trpc.files.createFolder.mutationOptions()
-  );
-  const { mutateAsync: updateFile, isPending: isFileUpdating } = useMutation(
-    trpc.files.updateFile.mutationOptions()
-  );
-  const { mutateAsync: updateFolder, isPending: isFolderUpdating } =
-    useMutation(trpc.files.updateFolder.mutationOptions());
-
-  const handleSubmit = async (values: FolderInput) => {
-    const { title, description } = values;
-    try {
-      if (actionType == "create") {
-        await createFolder(
-          {
-            name: title,
-            description: description ? description : undefined,
-          },
-          {
-            onSuccess() {
-              toast.success("Folder Created Successfully!");
-              queryClient.invalidateQueries({
-                queryKey: trpc.files.list.queryKey(),
-              });
-            },
-          }
-        );
-      } else if (actionType == "edit" && resourceType == "folder") {
-        await updateFolder(
-          {
-            id: editItem?.data.id as string,
-            name: title,
-            description: description ? description : undefined,
-          },
-          {
-            onSuccess() {
-              toast.success("Folder Updated Successfully!");
-              queryClient.invalidateQueries({
-                queryKey: trpc.files.list.queryKey(),
-              });
-            },
-          }
-        );
-      } else {
-        await updateFile(
-          { id: editItem?.data.id as string, name: title },
-          {
-            onSuccess() {
-              toast.success("File Updated Successfully!");
-              queryClient.invalidateQueries({
-                queryKey: trpc.files.list.queryKey(),
-              });
-            },
-          }
-        );
-      }
-    } catch (error) {
-      console.error({ error });
-    }
-  };
-
+  const { isLoading, mutate } = useMutateFileFolder({
+    actionType,
+    resourceType,
+    editItem,
+  });
   const form = useForm<FolderInput>({
     resolver: zodResolver(folderSchema),
     defaultValues: editItem
@@ -127,8 +68,6 @@ export const CreateUpdateModal = ({
   const title = `${actionType} ${resourceType}`;
   const description = `${actionType} the ${resourceType} details`;
 
-  const isLoading = isPending || isFileUpdating || isFolderUpdating;
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
@@ -139,10 +78,7 @@ export const CreateUpdateModal = ({
 
         <div>
           <Form {...form}>
-            <form
-              className="space-y-5 "
-              onSubmit={form.handleSubmit(handleSubmit)}
-            >
+            <form className="space-y-5 " onSubmit={form.handleSubmit(mutate)}>
               <FormField
                 control={form.control}
                 name="title"

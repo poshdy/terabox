@@ -1,7 +1,6 @@
 "use client";
 
 import { AppFile } from "@/hooks/use-upload";
-import { File } from "@/lib/generated/prisma";
 import { Item } from "@/lib/server/services/file.service";
 import { useRouter } from "next/navigation";
 import React, { createContext, useState } from "react";

@@ -168,7 +168,7 @@ class FileService {
     }
 
     const sortedItems = items.toSorted((a, b) => {
-      return b.data.updatedAt.getTime() - a.data.updatedAt.getTime();
+      return b.data.createdAt.getTime() - a.data.createdAt.getTime();
     });
 
     return sortedItems;

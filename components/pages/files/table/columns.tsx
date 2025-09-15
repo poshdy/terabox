@@ -48,9 +48,9 @@ export const columns: ColumnDef<Item>[] = [
     accessorKey: "updatedAt",
     header: "Last Modifies",
     cell: ({ row }) => {
-      const updatedAt = timeDistance(row.getValue("updatedAt"));
+      const createdAt = row.original.data?.createdAt;
 
-      return updatedAt;
+      return timeDistance(createdAt);
     },
   },
 

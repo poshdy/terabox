@@ -1,16 +1,22 @@
-import { QueryClient, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useFilesContext } from "./use-files-context";
 import { AppFile, UploadStatus } from "./use-upload";
-import { useTRPC, useTRPCClient } from "@/utils/trpc/root";
+import { useTRPC } from "@/utils/trpc/root";
+import { queryKeys } from "@/lib/query-keys";
 
 export const useUploadWrapper = () => {
-  const queryClient = new QueryClient();
   const trpc = useTRPC();
 
+  const { files } = queryKeys(trpc);
   const { mutateAsync: insertFile } = useMutation(
-    trpc.files.insertFile.mutationOptions({})
+    trpc.files.insertFile.mutationOptions({
+      meta: {
+        invalidateQueries: files,
+        success: "File uploaded successfully!",
+      },
+    })
   );
-  const { files, setFiles } = useFilesContext();
+  const { setFiles } = useFilesContext();
 
   const onProgress = (file: AppFile, progress: string) => {
     setFiles((prev) => {
@@ -27,7 +33,6 @@ export const useUploadWrapper = () => {
   };
 
   const onSuccess = async (file: AppFile) => {
-    console.log("file is uploaded successfully!", file);
     setFiles((prev) => {
       const files = [...prev];
       const index = files.findIndex((f) => f.id == file.id);
@@ -42,23 +47,12 @@ export const useUploadWrapper = () => {
 
       return files;
     });
-    await insertFile(
-      {
-        id: file.id as string,
-        name: file.name,
-        size: file.size,
-        type: file.type,
-      },
-      {
-        onSuccess() {
-          console.log("file uploaded successfully ");
-          queryClient.invalidateQueries({ queryKey: trpc.files.pathKey() });
-        },
-        onError(error) {
-          console.error({ error });
-        },
-      }
-    );
+    await insertFile({
+      id: file.id as string,
+      name: file.name,
+      size: file.size,
+      type: file.type,
+    });
   };
 
   const onError = (file: AppFile, error: Error) => {
