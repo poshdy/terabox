@@ -131,12 +131,18 @@ class FileService {
     }
   }
 
-  async list({ userId }: { userId: string }) {
+  async list({
+    userId,
+    folderId,
+  }: {
+    userId: string;
+    folderId?: string | null;
+  }) {
     const [folders, files] = await Promise.all([
       db.folder.findMany({
         where: {
           userId,
-          parentId: null,
+          parentId: folderId,
         },
         orderBy: {
           createdAt: "desc",
@@ -144,7 +150,8 @@ class FileService {
       }),
       db.file.findMany({
         where: {
-          folderId: null,
+          folderId,
+
           userId,
         },
         orderBy: {
@@ -260,6 +267,70 @@ class FileService {
         name,
       },
     });
+  }
+
+  async move({
+    target,
+    fileId,
+    folderId,
+  }: {
+    target: string;
+    fileId: string | null;
+    folderId: string | null;
+  }) {
+    function isTheSameParent(id: string | null) {
+      return id === target;
+    }
+    if (fileId) {
+      const file = await db.file.findUnique({ where: { id: fileId } });
+
+      if (!file) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "file not found" });
+      }
+      const isSameParent = isTheSameParent(file.folderId);
+
+      if (isSameParent) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "you are trying to move the file to the same location",
+        });
+      }
+
+      await db.file.update({
+        where: {
+          id: fileId,
+        },
+        data: {
+          folderId: target,
+        },
+      });
+    }
+    if (folderId) {
+      const folder = await db.folder.findUnique({ where: { id: folderId } });
+
+      if (!folder) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+        });
+      }
+      const isSameParent = isTheSameParent(folder.parentId);
+
+      if (isSameParent) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "you are trying to move the file to the same location",
+        });
+      }
+
+      await db.folder.update({
+        where: {
+          id: folderId,
+        },
+        data: {
+          parentId: target,
+        },
+      });
+    }
   }
   async deleteFolder(folderId: string) {
     try {

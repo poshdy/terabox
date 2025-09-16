@@ -64,21 +64,23 @@ export const files = router({
       }
       return await filesService.updateFolder({ input: { ...input } });
     }),
-  list: protectedProcedure.query(
-    async ({
-      input,
-      ctx: {
-        user: { userId },
-      },
-    }) => {
-      if (!userId)
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "NO USER ID FOUND",
-        });
-      return await filesService.list({ userId });
-    }
-  ),
+  list: protectedProcedure
+    .input(z.object({ folderId: z.cuid().nullable() }))
+    .query(
+      async ({
+        input,
+        ctx: {
+          user: { userId },
+        },
+      }) => {
+        if (!userId)
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "NO USER ID FOUND",
+          });
+        return await filesService.list({ userId, ...input });
+      }
+    ),
 
   getFile: protectedProcedure
     .input(z.object({ fileId: z.cuid() }))
@@ -128,5 +130,25 @@ export const files = router({
       }
 
       return await filesService.insertFile({ userId, input });
+    }),
+
+  move: protectedProcedure
+    .input(
+      z.object({
+        fileId: z.cuid().nullable(),
+        folderId: z.cuid().nullable(),
+        target: z.cuid(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const {
+        user: { userId },
+      } = ctx;
+
+      if (!userId) {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
+      return await filesService.move({ ...input });
     }),
 });

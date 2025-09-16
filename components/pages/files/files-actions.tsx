@@ -6,17 +6,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useFilesContext } from "@/hooks/use-files-context";
 import { Item } from "@/lib/server/services/file.service";
-import { useTRPC } from "@/utils/trpc/root";
+
 import {
   IconArrowsMove,
   IconDotsVertical,
   IconEdit,
 } from "@tabler/icons-react";
-import { useMutation } from "@tanstack/react-query";
 
 export const FilesActions = ({ item }: { item: Item }) => {
-  const trpc = useTRPC();
-  const { openModal, setEditItem } = useFilesContext();
+  const { openModal, setEditItem, onSetItem } = useFilesContext();
 
   const handleUpdate = () => {
     setEditItem(item);
@@ -48,6 +46,7 @@ export const FilesActions = ({ item }: { item: Item }) => {
         <DropdownMenuItem
           onClick={(e) => {
             e.stopPropagation();
+            onSetItem(item);
             openModal("move");
           }}
         >

@@ -11,12 +11,15 @@ import { FilePreviewer } from "./previewr.drawer";
 import { MoveModal } from "./move-modal";
 
 const FilesList = () => {
-  const { closeModal, modal } = useFilesContext();
+  const { closeModal, modal, currentFolder } = useFilesContext();
   const trpc = useTRPC();
   const { data, isPending } = useQuery(
-    trpc.files.list.queryOptions(undefined, {
-      staleTime: 2 * 60 * 1000,
-    })
+    trpc.files.list.queryOptions(
+      { folderId: currentFolder ?? null },
+      {
+        staleTime: 2 * 60 * 1000,
+      }
+    )
   );
 
   if (isPending) {
