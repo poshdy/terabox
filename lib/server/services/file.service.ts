@@ -332,6 +332,36 @@ class FileService {
       });
     }
   }
+
+  async starFile({
+    fileId,
+    folderId,
+    action,
+  }: {
+    action: boolean;
+    folderId?: string | null;
+    fileId?: string | null;
+  }) {
+    if (fileId) {
+      await db.file.update({
+        where: {
+          id: fileId,
+        },
+        data: {
+          starred: action,
+        },
+      });
+    }
+
+    if (folderId) {
+      await db.folder.update({
+        data: {
+          starred: action,
+        },
+        where: { id: folderId },
+      });
+    }
+  }
   async deleteFolder(folderId: string) {
     try {
       /* get the target folder

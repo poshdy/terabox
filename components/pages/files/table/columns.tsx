@@ -6,6 +6,8 @@ import { timeDistance } from "@/lib/dayjs";
 import { FilesActions } from "../files-actions";
 import { type Item } from "@/lib/server/services/file.service";
 import { fileType, fileTypeIcon } from "@/lib/files";
+import { Star } from "lucide-react";
+import { IconStar, IconStarFilled } from "@tabler/icons-react";
 
 const renderNameColumn = (type: "file" | "folder", data: File | Folder) => {
   if (type == "folder") {
@@ -59,7 +61,17 @@ export const columns: ColumnDef<Item>[] = [
     accessorKey: "actions",
     cell({ row }) {
       const item = row.original;
-      return <FilesActions item={item} />;
+      const size = 16;
+      return (
+        <div className="flex items-center gap-2">
+          {item.data.starred ? (
+            <IconStarFilled size={size} />
+          ) : (
+            <IconStar size={size} />
+          )}
+          <FilesActions item={item} />
+        </div>
+      );
     },
   },
 ];

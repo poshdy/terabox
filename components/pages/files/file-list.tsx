@@ -40,6 +40,7 @@ const FilesList = () => {
           onClose={() => closeModal("createUpdate")}
         />
       )}
+      
       {modal?.type == "move" && (
         <MoveModal open={modal.isOpen} onClose={() => closeModal("move")} />
       )}

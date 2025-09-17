@@ -151,4 +151,17 @@ export const files = router({
 
       return await filesService.move({ ...input });
     }),
+
+  markStarred: protectedProcedure
+    .input(
+      z.object({
+        fileId: z.cuid().nullish(),
+        folderId: z.cuid().nullish(),
+        action: z.boolean(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { fileId, folderId, action } = input;
+      return filesService.starFile({ action, fileId, folderId });
+    }),
 });
