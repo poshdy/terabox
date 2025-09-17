@@ -22,27 +22,27 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Logo } from "./logo";
-import { type LucideIcon } from "lucide-react";
+import Link from "next/link";
 const data = {
   navMain: [
     {
       title: "Files",
-      url: "/files",
+      url: "/files?resource=all",
       icon: IconFileDescription,
     },
     {
       title: "Folders",
-      url: "/folders",
+      url: "/files",
       icon: IconFolders,
     },
     {
       title: "Starred",
-      url: "files/starred",
+      url: "/files?resource=starred",
       icon: IconStar,
     },
     {
       title: "Bin",
-      url: "/files/bin",
+      url: "/files?resource=deleted",
       icon: IconTrash,
     },
   ],
@@ -105,9 +105,11 @@ const SidebarItems = ({
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton tooltip={item.title}>
                 {item.icon && <item.icon />}
-                <span className="text-xs  text-muted-foreground">
-                  {item.title}
-                </span>
+                <Link href={item.url}>
+                  <span className="text-xs  text-muted-foreground">
+                    {item.title}
+                  </span>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}

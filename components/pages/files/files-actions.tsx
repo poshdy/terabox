@@ -7,7 +7,12 @@ import {
 import { useFilesContext } from "@/hooks/use-files-context";
 import { queryKeys } from "@/lib/query-keys";
 import { Item } from "@/lib/server/services/file.service";
-import { IconStar, IconStarFilled } from "@tabler/icons-react";
+import {
+  IconRestore,
+  IconStar,
+  IconStarFilled,
+  IconTrash,
+} from "@tabler/icons-react";
 
 import { useTRPC } from "@/utils/trpc/root";
 
@@ -17,8 +22,12 @@ import {
   IconEdit,
 } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
+import { Resource } from "./file-list";
 
 export const FilesActions = ({ item }: { item: Item }) => {
+  const params = useSearchParams();
+  const resource = params.get("resource") as Resource;
   const trpc = useTRPC();
   const { files } = queryKeys(trpc);
   const { mutateAsync: handleStar } = useMutation(
@@ -34,16 +43,23 @@ export const FilesActions = ({ item }: { item: Item }) => {
       },
     })
   );
+  const { mutateAsync: restore } = useMutation(
+    trpc.files.restore.mutationOptions({
+      meta: {
+        invalidateQueries: files,
+        successMessage: `${
+          item.type == "folder" ? "Folder" : "File"
+        } restored successfully`,
+        errorMessage: `Failed to restore file`,
+      },
+    })
+  );
+
   const { openModal, setEditItem, onSetItem } = useFilesContext();
 
   const handleUpdate = () => {
     setEditItem(item);
     openModal("createUpdate");
-  };
-
-  const handleDelete = () => {
-    try {
-    } catch (error) {}
   };
 
   return (
@@ -83,6 +99,31 @@ export const FilesActions = ({ item }: { item: Item }) => {
         >
           <IconArrowsMove />
           Move
+        </DropdownMenuItem>
+
+        {item.type == "file" && resource == "deleted" && (
+          <DropdownMenuItem
+            onClick={async (e) => {
+              e.stopPropagation();
+
+              if (item) {
+                await restore({ fileId: item.data.id });
+              }
+            }}
+          >
+            <IconRestore />
+            Restore
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            onSetItem(item);
+            openModal("delete");
+          }}
+        >
+          <IconTrash />
+          Delete
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

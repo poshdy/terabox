@@ -53,6 +53,21 @@ export const files = router({
       }
       return await filesService.createFolder({ userId, input: { ...input } });
     }),
+  restore: protectedProcedure
+    .input(z.object({ fileId: z.cuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const {
+        user: { userId },
+      } = ctx;
+
+      if (!userId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "User id is missing",
+        });
+      }
+      return await filesService.restore(input.fileId);
+    }),
   updateFolder: protectedProcedure
     .input(folderSchema.partial().extend({ id: z.cuid() }))
     .mutation(async ({ input }) => {
@@ -65,7 +80,12 @@ export const files = router({
       return await filesService.updateFolder({ input: { ...input } });
     }),
   list: protectedProcedure
-    .input(z.object({ folderId: z.cuid().nullable() }))
+    .input(
+      z.object({
+        folderId: z.cuid().nullable(),
+        resource: z.enum(["deleted", "starred", "all"]).nullable(),
+      })
+    )
     .query(
       async ({
         input,
@@ -163,5 +183,17 @@ export const files = router({
     .mutation(async ({ input }) => {
       const { fileId, folderId, action } = input;
       return filesService.starFile({ action, fileId, folderId });
+    }),
+  delete: protectedProcedure
+    .input(
+      z.object({
+        fileId: z.cuid().nullable(),
+        folderId: z.cuid().nullable(),
+        isPermenant: z.boolean(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { fileId, folderId, isPermenant } = input;
+      return filesService.delete({ isPermenant, fileId, folderId });
     }),
 });

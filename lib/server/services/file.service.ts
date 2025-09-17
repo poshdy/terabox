@@ -1,4 +1,4 @@
-import { File, Folder } from "@/lib/generated/prisma";
+import { File, Folder, Prisma } from "@/lib/generated/prisma";
 import { db } from "../db";
 import { FileInput } from "../trpc/routers/files.router";
 import { TRPCError } from "@trpc/server";
@@ -131,18 +131,53 @@ class FileService {
     }
   }
 
+  async restore(fileId: string) {
+    return await db.file.update({
+      where: { id: fileId },
+      data: { deletedAt: null },
+    });
+  }
+
   async list({
     userId,
     folderId,
+    resource,
   }: {
     userId: string;
     folderId?: string | null;
+    resource?: "deleted" | "starred" | "all" | null;
   }) {
+    const filesWhere: Prisma.FileWhereInput = {
+      userId,
+      deletedAt: null,
+    };
+    const foldersWhere: Prisma.FolderWhereInput = {
+      parentId: folderId,
+      userId,
+    };
+
+
+    if (folderId) {
+      filesWhere.folderId = folderId;
+    }
+    if (resource == "all") {
+      filesWhere.folderId = folderId;
+    }
+
+    if (resource && resource == "deleted") {
+      filesWhere.deletedAt = {
+        not: null,
+      };
+    }
+
+    if (resource == "starred") {
+      filesWhere.starred = true;
+      foldersWhere.starred = true;
+    }
     const [folders, files] = await Promise.all([
       db.folder.findMany({
         where: {
-          userId,
-          parentId: folderId,
+          ...foldersWhere,
         },
         orderBy: {
           createdAt: "desc",
@@ -150,9 +185,7 @@ class FileService {
       }),
       db.file.findMany({
         where: {
-          folderId,
-
-          userId,
+          ...filesWhere,
         },
         orderBy: {
           createdAt: "desc",
@@ -167,11 +200,13 @@ class FileService {
         type: "file",
       });
     }
-    for (const folder of folders) {
-      items.push({
-        data: folder,
-        type: "folder",
-      });
+    if (!resource || resource !== "deleted") {
+      for (const folder of folders) {
+        items.push({
+          data: folder,
+          type: "folder",
+        });
+      }
     }
 
     const sortedItems = items.toSorted((a, b) => {
@@ -362,15 +397,80 @@ class FileService {
       });
     }
   }
-  async deleteFolder(folderId: string) {
-    try {
-      /* get the target folder
-        check if it has children
-        if yes
-         loop over each child and check if it has children
 
- 
- */
+  async delete({
+    fileId,
+    folderId,
+    isPermenant,
+  }: {
+    fileId: string | null;
+    folderId: string | null;
+    isPermenant: boolean;
+  }) {
+    if (fileId) {
+      if (isPermenant) {
+        const file = await db.file.findUnique({ where: { id: fileId } });
+        if (!file) throw new TRPCError({ code: "NOT_FOUND" });
+        return await Promise.all([
+          db.file.delete({
+            where: {
+              id: fileId,
+            },
+          }),
+
+          supabaseService.deleteObject(file.key),
+        ]);
+      }
+      await db.file.update({
+        where: {
+          id: fileId,
+        },
+        data: {
+          deletedAt: new Date(),
+          starred: false,
+        },
+      });
+    }
+
+    if (folderId) {
+      if (isPermenant) {
+        await db.$transaction(async (tx) => {
+          const folder = await tx.folder.findUnique({
+            where: { id: folderId },
+          });
+          if (!folder)
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Folder not found",
+            });
+          await this.deleteFolder(folderId, tx);
+        });
+      }
+    }
+  }
+  async deleteFolder(folderId: string, tx: Prisma.TransactionClient) {
+    try {
+      const subFolders = await tx.folder.findMany({
+        where: { parentId: folderId },
+        select: { id: true },
+      });
+
+      for (const sb of subFolders) {
+        await this.deleteFolder(sb.id, tx);
+      }
+
+      await tx.file.updateMany({
+        where: {
+          folderId,
+          deletedAt: null,
+        },
+        data: {
+          deletedAt: new Date(),
+          starred: false,
+        },
+      });
+
+      await tx.folder.delete({ where: { id: folderId } });
     } catch (err) {
       console.error({ err });
     }

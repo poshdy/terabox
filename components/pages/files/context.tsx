@@ -22,7 +22,7 @@ interface IFilesContext {
 
 export const FilesContext = createContext<IFilesContext | null>(null);
 
-type ModalTypes = "createUpdate" | "move" | "share" | "viewer";
+type ModalTypes = "createUpdate" | "move" | "share" | "viewer" | "delete";
 
 export const FilesContextProvider = ({
   children,

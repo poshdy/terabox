@@ -37,7 +37,7 @@ model Folder {
   updatedAt DateTime @updatedAt
 
   subFolders   Folder[] @relation("FolderSubFolders")
-  parentFolder Folder?  @relation("FolderSubFolders", fields: [parentId], references: [id], onDelete: Cascade)
+  parentFolder Folder?  @relation("FolderSubFolders", fields: [parentId], references: [id], onDelete: SetNull)
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   File         File[]
 
@@ -59,7 +59,7 @@ model File {
   starred   Boolean   @default(false)
 
   user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  folder Folder? @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  folder Folder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@map("files")

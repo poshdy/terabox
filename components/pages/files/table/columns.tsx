@@ -6,7 +6,6 @@ import { timeDistance } from "@/lib/dayjs";
 import { FilesActions } from "../files-actions";
 import { type Item } from "@/lib/server/services/file.service";
 import { fileType, fileTypeIcon } from "@/lib/files";
-import { Star } from "lucide-react";
 import { IconStar, IconStarFilled } from "@tabler/icons-react";
 
 const renderNameColumn = (type: "file" | "folder", data: File | Folder) => {

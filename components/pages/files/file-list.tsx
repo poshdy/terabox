@@ -9,13 +9,21 @@ import { DataTable } from "./table/table";
 import { columns } from "./table/columns";
 import { FilePreviewer } from "./previewr.drawer";
 import { MoveModal } from "./move-modal";
+import { DeleteModal } from "./alert-modal";
+import { useSearchParams } from "next/navigation";
 
+export type Resource = "deleted" | "starred" | "all" | null;
 const FilesList = () => {
+  const params = useSearchParams();
+  const resource = params.get("resource") as Resource;
   const { closeModal, modal, currentFolder } = useFilesContext();
   const trpc = useTRPC();
   const { data, isPending } = useQuery(
     trpc.files.list.queryOptions(
-      { folderId: currentFolder ?? null },
+      {
+        folderId: currentFolder ?? null,
+        resource: params.get("resource") as Resource,
+      },
       {
         staleTime: 2 * 60 * 1000,
       }
@@ -40,13 +48,20 @@ const FilesList = () => {
           onClose={() => closeModal("createUpdate")}
         />
       )}
-      
+
       {modal?.type == "move" && (
         <MoveModal open={modal.isOpen} onClose={() => closeModal("move")} />
       )}
 
       {modal?.type == "viewer" && modal.isOpen && (
         <FilePreviewer
+          open={modal.isOpen}
+          onClose={() => closeModal("viewer")}
+        />
+      )}
+      {modal?.type == "delete" && modal.isOpen && (
+        <DeleteModal
+          isPermenant={resource == "deleted"}
           open={modal.isOpen}
           onClose={() => closeModal("viewer")}
         />

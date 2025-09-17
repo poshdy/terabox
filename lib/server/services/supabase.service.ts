@@ -24,6 +24,17 @@ class SupabaseService {
 
     return data.signedUrl;
   }
+  async deleteObject(objectPath: string) {
+    const { data, error } = await this.supabaseClient.storage
+      .from("terabox")
+      .remove([objectPath]);
+
+    if (error) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+    }
+
+    return data;
+  }
 }
 
 export const supabaseService = new SupabaseService();
